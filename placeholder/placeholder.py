@@ -2,13 +2,18 @@ import hashlib
 import os
 import sys
 
+from io import BytesIO
+from PIL import Image, ImageDraw
+
 from django.conf import settings
 
 DEBUG = os.environ.get('DEBUG','on') == 'on'
 
 SECRET_KEY = os.environ.get('SECRET_KEY','django-insecure-&lt#ctch$*ov4nvo-iu7%6)k2nn6u&86bpuyv^9!socgteock#')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
+BASE_DIR = os.path.dirname(__file__)
+
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 settings.configure(
     DEBUG=DEBUG,
@@ -20,17 +25,31 @@ settings.configure(
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
     ),
+    INSTALLED_APPS=(
+        'django.contrib.staticfiles',
+    ),
+    TEMPLATES=(
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': (os.path.join(BASE_DIR, 'templates'), ),
+            'APP_DIRS': True,
+        },
+    ),
+    STATICFILES_DIRS=(
+        os.path.join(BASE_DIR, 'static').replace('\\','/'),
+    ),
+    STATIC_URL='/static/',
 )
+
 
 from django import forms
 from django.urls import re_path
 from django.core.cache import cache
+from django.urls import reverse
 from django.core.wsgi import get_wsgi_application
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render
 from django.views.decorators.http import etag
-
-from io import BytesIO
-from PIL import Image, ImageDraw
 
 class ImageForm(forms.Form):
     """Formulário para validar o placeholder de imagem solicitado."""
@@ -71,8 +90,15 @@ def placeholder(request, width, height):
     else:
         return HttpResponseBadRequest('Invalid Image Request')
 
+from django.template import loader
+
 def index(request):
-    return HttpResponse('Hello World')
+    example = reverse('placeholder', kwargs={'width': 50, "height": 50})
+    context = {
+        'example': request.build_absolute_uri(example)
+    }
+    
+    return render(request, 'home.html', context=context)
 
 urlpatterns = (
     re_path(r'^image/(?P<width>[0-9]+)x(?P<height>[0-9]+)/$', placeholder, name='placeholder'),
