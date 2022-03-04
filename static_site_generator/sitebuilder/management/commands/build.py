@@ -1,9 +1,5 @@
-from ast import Interactive
-from http import client
-import shutil
 import os
 import shutil
-from urllib import response
 
 from django.conf import settings
 from django.core.management import call_command
@@ -26,6 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Solicita as paginas e gera a saída."""
         settings.DEBUG = False
+        settings.COMPRESS_ENABLED = True
 
         if args:
             pages = args
@@ -44,6 +41,7 @@ class Command(BaseCommand):
             os.mkdir(settings.SITE_OUTPUT_DIRECTORY)
             os.makedirs(settings.STATIC_ROOT)
         call_command('collectstatic', interactive=False, clear=True, verbosity=0)
+        call_command('compress', force=True)
         client = Client()
         for page in pages:
             url = reverse('page', kwargs={'slug':page})

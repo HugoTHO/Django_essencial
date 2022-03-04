@@ -1,4 +1,4 @@
-{% load static %}
+{% load static compress %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -7,7 +7,9 @@
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <title>{% block title %}Rapid Prototypes{% endblock %}</title>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+        {% compress css %}
         <link rel="stylesheet" href="{% static 'css/site.css' %}">
+        {% endcompress %}
     </head>
     <body id="{% block body-id %}body{% endblock %}">
         {% block top-nav-wrapper %}
@@ -26,6 +28,9 @@
                     <ul class="nav navbar-nav">
                         <li {% if slug == 'index' %}class="active"{% endif %}>
                             <a href="/">Home</a>
+                        </li>
+                        <li {% if slug == 'pricing' %}class="active"{% endif %}>
+                            <a href="{% url 'page' 'pricing' %}">Pricing</a>
                         </li>
                         <li {% if slug == 'contact' %}class="active"{% endif %}>
                             <a href="{% url 'page' 'contact' %}">Contact</a>
