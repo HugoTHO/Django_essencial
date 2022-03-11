@@ -1,5 +1,5 @@
 (function ($, Backbone, _, app){
-
+    
     var HomepageView = Backbone.View.extend({
         templateName: '#home-template',
         initialize: function () {
