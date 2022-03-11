@@ -1,7 +1,7 @@
 (function ($, Backbone, _, app){
-    
-    var HomepageView = Backbone.View.extend({
-        templateName: '#home-template',
+
+    var TemplateView = Backbone.View.extend({
+        templateName: '',
         initialize: function () {
             this.template = _.template($(this.templateName).html());
         },
@@ -15,6 +15,73 @@
         }
     });
 
+    var FormView = TemplateView.extend({
+        id: 'login',
+        templateName: '#login-template',
+        
+        events: {
+            'submit form': 'submit'
+        },
+        errorTemplate: _.template('<span class="error"><%- msg %></span>'),
+        clearErrors: function () {
+            $('.error', this.form).remove();
+        },
+        showErrors: function (errors) {
+            _.map(errors, function (fieldErrors, name) {
+                var field = $(':input[name=' + name + ']', this.form),
+                    label = $('label[for=' + field.attr('id') + ']', this.form);
+                if (label.length == 0) {
+                    label = $('label', this.form).first();
+                }
+                _map(fieldErrors, appendError, this);
+            }, this);
+        },
+        serializeForm: function (form) {
+            return _.object(_.map(form.serializeArray(), function (item) {
+                // Converte o objeto para uma tupla (nome, valor)
+                return [item.name, item.value];
+            }));
+        },
+        submit: function (event) {
+            event.preventDefault();
+            this.form = $(event.currentTarget);
+            this.clearErrors();
+        },
+        failure: function (xhr, status, error) {
+            var errors = xhr.responseJSON;
+            this.showErrors(errors);
+        },
+        done: function (event) {
+            if (event) {
+                event.preventDefault();
+            }
+            this.trigger('done');
+            this.remove();
+        }
+    });
+    
+    var HomepageView = TemplateView.extend({
+        templateName: '#home-template',
+    });
+
+    var LoginView = FormView.extend({
+        id: 'login',
+        templateName: '#login-template',
+        submit: function (event) {
+            var data = {};
+            FormView.prototype.submit.apply(this, arguments);
+            data = this.serializeForm(this.form)
+            $.post(app.apiLogin, data)
+                .success($.proxy(this.loginSuccess, this))
+                .fail($.proxy(this.failure, this));
+        },
+        loginSuccess: function (data) {
+            app.session.save(data.token);
+            this.done();
+        }
+    });
+
     app.views.HomepageView = HomepageView;
+    app.views.LoginView = LoginView;
     
 })(jQuery, Backbone, _, app);
