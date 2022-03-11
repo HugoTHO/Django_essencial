@@ -77,11 +77,28 @@
         },
         loginSuccess: function (data) {
             app.session.save(data.token);
-            this.trigger('login', data.token);
+            this.done();
+        }
+    });
+
+    var HeaderView = TemplateView.extend({
+        tagName: 'header',
+        templateName: '#header-template',
+        events: {
+            'click a.logout': 'logout'
+        },
+        getContext: function () {
+            return {authenticated: app.session.authenticated()};
+        },
+        logout: function (event) {
+            event.preventDefault();
+            app.session.delete();
+            window.location = '/';
         }
     });
 
     app.views.HomepageView = HomepageView;
     app.views.LoginView = LoginView;
+    app.views.HeaderView = HeaderView;
     
 })(jQuery, Backbone, _, app);
