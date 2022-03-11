@@ -7,6 +7,8 @@
         <title>Scrum Board</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+        <link rel="stylesheet" href="{% static 'board/css/board.css' %}">
         <script type="text/html" id="home-template">
             <h1>Welcome to my Scrum Board Project!</h1>
         </script>
@@ -24,7 +26,7 @@
             <% if (authenticated) { %>
                 <nav>
                     <a href="/" class="button">Your Sprints</a>
-                    <a href="#" class="logout button"></a>
+                    <a href="#" class="logout button">Logout</a>
                 </nav>
             <% } %>
         </script>
