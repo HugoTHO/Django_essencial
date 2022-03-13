@@ -1,6 +1,6 @@
 @import url(http://http://fonts.googleapis.com/css?family=Lato:300,400,700,900);
 
-/* Generic
+/* Genérico
 ========================= */
 body {
     -moz-box-sizing: border-box;
@@ -50,7 +50,7 @@ input, textarea {
     display: block;
 }
 
-/* Header
+/* Cabeçalho
 ========================== */
 
 header {
@@ -79,7 +79,7 @@ header nav a:hover {
     color: #FFF;
 }
 
-/* Login
+/* Tela de Login
 ========================== */
 
 #login {
@@ -98,4 +98,24 @@ header nav a:hover {
 
 #login form label, #login form input {
     display: block;
+}
+
+/* Lista de sprints
+========================== */
+
+.sprints {
+    margin-top: 25px;
+}
+
+.sprints a.sprint {
+    padding: 25px;
+    float: left;
+    text-align: center;
+    background: #000;
+    margin: 8px 8px 0 0;
+    color: #FFF;
+}
+
+.sprints a.sprint span {
+    font-size: 10px;
 }
