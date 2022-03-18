@@ -201,6 +201,28 @@
             view.on('done', function () {
                 link.show();
             });
+        },
+        addTask: function (view) {
+            $('.list', this.$el).append(view.el);
+        },
+    });
+
+    var TaskItemView = TemplateView.extend({
+        tagName: 'div',
+        className: 'task-item',
+        templateName: '#task-item-template',
+        initialize: function (options) {
+            TemplateView.prototype.initialize.apply(this, arguments);
+            this.task = options.task;
+            this.task.on('change', this.render, this);
+            this.task.on('remove', this.remove, this);
+        },
+        getContext: function () {
+            return {task: this.task};
+        },
+        render: function () {
+            TemplateView.prototype.render.apply(this, arguments);
+            this.$el.css('order', this.task.get('order'));
         }
     });
 
@@ -211,18 +233,18 @@
             TemplateView.prototype.initialize.apply(this, arguments);
             this.sprintId = options.sprintId;
             this.sprint = null;
-            this.tasks = [];
+            this.tasks = {};
             this.statuses = {
                 unassigned: new StatusView({
                     sprint: null, status: 1, title: 'Backlog'}),
                 todo: new StatusView({
-                    sprint: null, status: 1, title: 'Not Started'}),
+                    sprint: this.sprintId, status: 1, title: 'Not Started'}),
                 active: new StatusView({
-                    sprint: null, status: 2, title: 'In Development'}),
+                    sprint: this.sprintId, status: 2, title: 'In Development'}),
                 testing: new StatusView({
-                    sprint: null, status: 3, title: 'In Testing'}),
+                    sprint: this.sprintId, status: 3, title: 'In Testing'}),
                 done: new StatusView({
-                    sprint: null, status: 4, title: 'Completed'})
+                    sprint: this.sprintId, status: 4, title: 'Completed'})
             };
             app.collections.ready.done(function () {
                 app.tasks.on('add', self.addTask, self);
@@ -252,21 +274,27 @@
                 view.delegateEvents();
                 view.render();
             }, this);
-            _.each(this.tasks, function (task) {
-                this.renderTask(task);
+            _.each(this.tasks, function (view, taskId) {
+                var task = app.tasks.get(taskId);
+                view.remove();
+                this.tasks[taskId] = this.renderTask(task);
             }, this);
         },
         addTask: function (task) {
             if (task.inBacklog() || task.inSprint(this.sprint)) {
-                this.tasks[task.get('id')] = task;
-                this.renderTask(task);
+                this.tasks[task.get('id')] = this.renderTask(task);
             }
         },
         renderTask: function (task) {
-            var column = task.statusClass(),
-                container = this.statuses[column],
-                html = _.template('<div><%- task.get("name") %></div>', {task: task});
-            $('.list', container.$el).append(html);
+            var view = new TaskItemView({task: task});
+            _.each(this.statuses, function (container, name) {
+                if (container.sprint == task.get('sprint') &&
+                        container.status == task.get('status')) {
+                    container.addTask(view);
+                }
+            });
+            view.render();
+            return view;
         }
     });
 
