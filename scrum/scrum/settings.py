@@ -121,6 +121,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+WATERCOOLER_SERVER = os.environ.get('WATERCOOLER_SERVER', 'localhost:8080')
+
+WATERCOOLER_SECURE = bool(os.environ.get('WATERCOOLER_SECURE', ''))
+
 STATIC_ROOT = STATIC_ROOT=os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type

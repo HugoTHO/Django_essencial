@@ -315,10 +315,12 @@
                 done: new StatusView({
                     sprint: this.sprintId, status: 4, title: 'Completed'})
             };
+            this.socket = null;
             app.collections.ready.done(function () {
                 app.tasks.on('add', self.addTask, self);
                 app.sprints.getOrFetch(self.sprintId).done(function (sprint) {
                     self.sprint = sprint;
+                    self.connectSocket();
                     self.render();
                     // Adiciona qualquer tarefa corrente
                     app.tasks.each(self.addTask, self);
@@ -364,6 +366,18 @@
             });
             view.render();
             return view;
+        },
+        connectSocket: function () {
+            var links = this.sprint && this.sprint.get('links');
+            if (links && links.channel) {
+                this.socket = new app.Socket(links.channel);
+            }
+        },
+        remove: function () {
+            TemplateView.prototype.remove.apply(this, arguments);
+            if (this.socket && this.socket.close) {
+                this.socket.close();
+            }
         }
     });
 
@@ -371,6 +385,5 @@
     app.views.LoginView = LoginView;
     app.views.HeaderView = HeaderView;
     app.views.SprintView = SprintView;
-
     
 })(jQuery, Backbone, _, app);
