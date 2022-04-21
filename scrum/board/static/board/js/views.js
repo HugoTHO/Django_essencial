@@ -269,7 +269,16 @@
         className: 'task-item',
         templateName: '#task-item-template',
         events: {
-            'click': 'details'
+            'click': 'details',
+            'dragstart': 'start',
+            'dragenter': 'enter',
+            'dragover': 'over',
+            'dragleave': 'leave',
+            'dragend': 'end',
+            'drop': 'drop'
+        },
+        attributes: {
+            draggable: true,
         },
         initialize: function (options) {
             TemplateView.prototype.initialize.apply(this, arguments);
@@ -292,6 +301,42 @@
             view.on('done', function() {
                 this.$el.show();
             }, this);
+        },
+        start: function (event) {
+            var dataTransfer = event.originalEvent.dataTransfer;
+            dataTransfer.effectAllowed = 'move';
+            dataTransfer.setData('application/model', this.task.get('id'));
+            this.trigger('dragstart', this.task);
+        },
+        enter: function (event) {
+            event.originalEvent.dataTransfer.effectAllowed = 'move';
+            event.preventDefault();
+            this.$el.addClass('over');
+        },
+        over: function (event) {
+            event.originalEvent.dataTransfer.dropEffect = 'move';
+            event.preventDefault();
+            return false;
+        },
+        end: function (event) {
+            this.trigger('dragend', this.tesk);
+        },
+        leave: function (event) {
+            this.$el.removeClass('over');
+        },
+        drop: function (event) {
+            var dataTransfer = event.originalEvent.dataTransfer,
+                task = dataTransfer.getData('application/model');
+            if (event.stopPropagation) {
+                event.stroPropagation();
+            }
+            task = app.tasks.get(task);
+            if (task !== this.task) {
+                // TODO: Trata a reordenação das tarefas
+            }
+            this.trigger('drop', task);
+            this.leave();
+            return false;
         }
     });
 
