@@ -2,7 +2,7 @@
     var Socket = function (server) {
         this.server = server;
         this.ws = null;
-        this.connected = new $.Deffered();
+        this.connected = new $.Deferred();
         this.open();
     };
     Socket.prototype = _.extend(Socket.prototype, Backbone.Events, {
@@ -21,7 +21,7 @@
                 this.ws.close();
             }
             this.ws = null;
-            this.connected = new $.Deffered();
+            this.connected = new $.Deferred();
             this.trigger('closed');
         },
         onopen: function () {
