@@ -180,7 +180,11 @@
         className: 'status',
         templateName: '#status-template',
         events: {
-            'click button.add': 'renderAddForm'
+            'click button.add': 'renderAddForm',
+            'dragenter': 'enter',
+            'dragover': 'over',
+            'dragleave': 'leave',
+            'drop': 'drop'
         },
         initialize: function (options) {
             TemplateView.prototype.initialize.apply(this, arguments);
@@ -205,6 +209,29 @@
         addTask: function (view) {
             $('.list', this.$el).append(view.el);
         },
+        enter: function (event) {
+            event.originalEvent.dataTransfer.effectAllowed = 'move';
+            event.preventDefault();
+            this.$el.addClass('over');
+        },
+        over: function (event) {
+            event.originalEvent.dataTransfer.dropEffect = 'move';
+            event.preventDefault();
+            return false;
+        },
+        leave: function (event) {
+            this.$el.removeClass('over');
+        },
+        drop: function (event) {
+            var dataTransfer = event.originalEvent.dataTransfer,
+                task = dataTransfer.getData('application/model');
+            if (event.stopPropagation) {
+                event.stopPropagation();
+            }
+            // TODO: Trata a alteração do status da tarefa.
+            this.trigger('drop', task);
+            this.leave();
+        }
     });
 
     var TaskDetailView = FormView.extend({
@@ -328,7 +355,7 @@
             var dataTransfer = event.originalEvent.dataTransfer,
                 task = dataTransfer.getData('application/model');
             if (event.stopPropagation) {
-                event.stroPropagation();
+                event.stopPropagation();
             }
             task = app.tasks.get(task);
             if (task !== this.task) {
@@ -379,6 +406,15 @@
                 // Busca tarefas não atribuídas
                 app.tasks.getBacklog();
             });
+            _.each(this.statuses, function (view, name) {
+                view.on('drop', function (model) {
+                    this.socket.send({
+                        model: 'task',
+                        id: model.get(id),
+                        action: 'drop'
+                    });
+                }, this);
+            }, this);
         },
         getContext: function () {
             return {sprint: this.sprint};
@@ -410,6 +446,27 @@
                 }
             });
             view.render();
+            view.on('gradstart', function (model) {
+                this.socket.send({
+                    model: 'task',
+                    id: model.get('id'),
+                    action: 'dragstart'
+                });
+            }, this);
+            view.on('dragend', function (model) {
+                this.socket.send({
+                    model: 'task',
+                    id: model.get('id'),
+                    action: 'dragend'
+                });
+            }, this);
+            view.on('drop', function (model) {
+                this.socket.send({
+                    model: 'task',
+                    id: model.get('id'),
+                    action: 'drop'
+                });
+            }, this);
             return view;
         },
         connectSocket: function () {
