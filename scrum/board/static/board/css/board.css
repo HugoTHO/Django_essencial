@@ -218,3 +218,7 @@ header nav a:hover {
 .tasks .status.over {
     border: 1px black dotted;
 }
+
+.tasks .task-item.locked {
+    opacity: 0.5;
+}

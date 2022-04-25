@@ -364,6 +364,12 @@
             this.trigger('drop', task);
             this.leave();
             return false;
+        },
+        lock: function () {
+            this.$el.addClass('locked');
+        },
+        unlock: function () {
+            this.$el.removeClass('locked');
         }
     });
 
@@ -406,15 +412,6 @@
                 // Busca tarefas não atribuídas
                 app.tasks.getBacklog();
             });
-            _.each(this.statuses, function (view, name) {
-                view.on('drop', function (model) {
-                    this.socket.send({
-                        model: 'task',
-                        id: model.get(id),
-                        action: 'drop'
-                    });
-                }, this);
-            }, this);
         },
         getContext: function () {
             return {sprint: this.sprint};
@@ -473,6 +470,18 @@
             var links = this.sprint && this.sprint.get('links');
             if (links && links.channel) {
                 this.socket = new app.Socket(links.channel);
+                this.socket.on('task:dragstart', function (task) {
+                    var view = this.tasks[task];
+                    if (view) {
+                        view.lock();
+                    }
+                }, this);
+                this.socket.on('task:draged task:drop', function (task) {
+                    var view = this.tasks[task];
+                    if (view) {
+                        view.unlock();
+                    }
+                }, this);
             }
         },
         remove: function () {
