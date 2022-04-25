@@ -1,12 +1,14 @@
 (function ($, Backbone, _, app) {
+
     var Socket = function (server) {
         this.server = server;
         this.ws = null;
         this.connected = new $.Deferred();
         this.open();
     };
+
     Socket.prototype = _.extend(Socket.prototype, Backbone.Events, {
-        open: function() {
+        open: function () {
             if (this.ws === null) {
                 this.ws = new WebSocket(this.server);
                 this.ws.onopen = $.proxy(this.onopen, this);
@@ -33,7 +35,7 @@
             this.trigger('message', result, message);
             if (result.model && result.action) {
                 this.trigger(result.model + ':' + result.action,
-                    result.id, result, message);
+                    result.id, result, message);  
             }
         },
         onclose: function () {
@@ -48,8 +50,10 @@
                 payload = JSON.stringify(message);
             this.connected.done(function () {
                 self.ws.send(payload);
-            })
+            });
         }
     });
+
     app.Socket = Socket;
+
 })(jQuery, Backbone, _, app);

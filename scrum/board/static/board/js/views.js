@@ -5,12 +5,12 @@
         initialize: function () {
             this.template = _.template($(this.templateName).html());
         },
-        render: function() {
+        render: function () {
             var context = this.getContext(),
-                html = this.template(context);
+            html = this.template(context);
             this.$el.html(html);
         },
-        getContext: function (){
+        getContext: function () {
             return {};
         }
     });
@@ -18,7 +18,7 @@
     var FormView = TemplateView.extend({
         id: '',
         templateName: '',
-        
+
         events: {
             'submit form': 'submit',
             'click button.cancel' : 'done'
@@ -31,10 +31,10 @@
             _.map(errors, function (fieldErrors, name) {
                 var field = $(':input[name=' + name + ']', this.form),
                     label = $('label[for=' + field.attr('id') + ']', this.form);
-                if (label.length == 0) {
+                if (label.length === 0) {
                     label = $('label', this.form).first();
                 }
-                _map(fieldErrors, appendError, this);
+                _.map(fieldErrors, appendError, this);
             }, this);
         },
         serializeForm: function (form) {
@@ -73,7 +73,7 @@
                 attributes = {};
             FormView.prototype.submit.apply(this, arguments);
             attributes = this.serializeForm(this.form);
-            app.collections.ready.done( function () {
+            app.collections.ready.done(function () {
                 app.sprints.create(attributes, {
                     wait: true,
                     success: $.proxy(self.success, self),
@@ -86,13 +86,13 @@
             window.location.hash = '#sprint/' + model.get('id');
         }
     });
-    
+
     var HomepageView = TemplateView.extend({
         templateName: '#home-template',
         events: {
             'click button.add': 'renderAddForm'
         },
-        initialize: function () {
+        initialize: function (options) {
             var self = this;
             TemplateView.prototype.initialize.apply(this, arguments);
             app.collections.ready.done(function () {
@@ -128,7 +128,7 @@
         submit: function (event) {
             var data = {};
             FormView.prototype.submit.apply(this, arguments);
-            data = this.serializeForm(this.form)
+            data = this.serializeForm(this.form);
             $.post(app.apiLogin, data)
                 .success($.proxy(this.loginSuccess, this))
                 .fail($.proxy(this.failure, this));
@@ -166,7 +166,7 @@
                 app.tasks.create(attributes, {
                     wait: true,
                     success: $.proxy(self.success, self),
-                    error: $.proxy(self.modelFailure. self)
+                    error: $.proxy(self.modelFailure, self)
                 });
             });
         },
@@ -266,7 +266,7 @@
         },
         editField: function (event) {
             var $this = $(event.currentTarget),
-                value = $this.text().replace(/^\s+|\s+$/g, ''),
+                value = $this.text().replace(/^\s+|\s+$/g,''),
                 field = $this.data('field');
             this.changes[field] = value;
             $('button.save', this.$el).show();
@@ -280,7 +280,7 @@
                 function appendError(msg) {
                     var parent = field.parent('.with-label'),
                         error = this.errorTemplate({msg: msg});
-                    if (parent.length === 0) {
+                    if (parent.length  === 0) {
                         field.before(error);
                     } else {
                         parent.before(error);
@@ -305,7 +305,7 @@
             'drop': 'drop'
         },
         attributes: {
-            draggable: true,
+            draggable: true
         },
         initialize: function (options) {
             TemplateView.prototype.initialize.apply(this, arguments);
@@ -325,7 +325,7 @@
             this.$el.before(view.el);
             this.$el.hide();
             view.render();
-            view.on('done', function() {
+            view.on('done', function () {
                 this.$el.show();
             }, this);
         },
@@ -346,19 +346,19 @@
             return false;
         },
         end: function (event) {
-            this.trigger('dragend', this.tesk);
+            this.trigger('dragend', this.task);
         },
         leave: function (event) {
             this.$el.removeClass('over');
         },
         drop: function (event) {
             var dataTransfer = event.originalEvent.dataTransfer,
-                task = dataTransfer.getData('application/model');
+                task_id = dataTransfer.getData('application/model');
             if (event.stopPropagation) {
                 event.stopPropagation();
             }
             task = app.tasks.get(task);
-            if (task !== this.task) {
+            if (task !== this.task_id) {
                 // TODO: Trata a reordenação das tarefas
             }
             this.trigger('drop', task);
@@ -393,6 +393,15 @@
                 done: new StatusView({
                     sprint: this.sprintId, status: 4, title: 'Completed'})
             };
+            _.each(this.statuses, function (view, name) {
+                view.on('drop', function (task_id) {
+                    this.socket.send({
+                        model: 'task',
+                        id: task_id,
+                        action: 'drop'
+                    });
+                }, this);
+            }, this);
             this.socket = null;
             app.collections.ready.done(function () {
                 app.tasks.on('add', self.addTask, self);
@@ -438,12 +447,11 @@
             var view = new TaskItemView({task: task});
             _.each(this.statuses, function (container, name) {
                 if (container.sprint == task.get('sprint') &&
-                        container.status == task.get('status')) {
+                    container.status == task.get('status')) {
                     container.addTask(view);
                 }
             });
-            view.render();
-            view.on('gradstart', function (model) {
+            view.on('dragstart', function (model) {
                 this.socket.send({
                     model: 'task',
                     id: model.get('id'),
@@ -464,6 +472,7 @@
                     action: 'drop'
                 });
             }, this);
+            view.render();
             return view;
         },
         connectSocket: function () {
@@ -476,7 +485,7 @@
                         view.lock();
                     }
                 }, this);
-                this.socket.on('task:draged task:drop', function (task) {
+                this.socket.on('task:dragend task:drop', function (task) {
                     var view = this.tasks[task];
                     if (view) {
                         view.unlock();
@@ -496,5 +505,5 @@
     app.views.LoginView = LoginView;
     app.views.HeaderView = HeaderView;
     app.views.SprintView = SprintView;
-    
+
 })(jQuery, Backbone, _, app);

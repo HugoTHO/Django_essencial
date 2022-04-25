@@ -1,4 +1,5 @@
 var app = (function ($) {
+    
     var config = $('#config'),
         app = JSON.parse(config.text());
 
@@ -7,4 +8,5 @@ var app = (function ($) {
     })
 
     return app;
+
 })(jQuery);
