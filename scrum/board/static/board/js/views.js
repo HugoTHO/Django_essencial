@@ -224,11 +224,22 @@
         },
         drop: function (event) {
             var dataTransfer = event.originalEvent.dataTransfer,
-                task = dataTransfer.getData('application/model');
+                task = dataTransfer.getData('application/model'),
+                tasks, order;
             if (event.stopPropagation) {
                 event.stopPropagation();
             }
-            // TODO: Trata a alteração do status da tarefa.
+            // Alteração do status da tarefa.
+            task = app.tasks.get(task);
+            tasks = app.tasks.where({sprint: this.sprint, status: this.status});
+            if (tasks.length) {
+                order = _.min(_.map(tasks, function (model) {
+                    return model.get('order');
+                }));
+            } else {
+                order = 1;
+            }
+            task.moveTo(this.status, this.sprint, order - 1);
             this.trigger('drop', task);
             this.leave();
         }
@@ -352,14 +363,30 @@
             this.$el.removeClass('over');
         },
         drop: function (event) {
-            var dataTransfer = event.originalEvent.dataTransfer,
-                task_id = dataTransfer.getData('application/model');
+            var self = this,
+                dataTransfer = event.originalEvent.dataTransfer,
+                task = dataTransfer.getData('application/model'),
+                tasks, order;
             if (event.stopPropagation) {
                 event.stopPropagation();
             }
             task = app.tasks.get(task);
-            if (task !== this.task_id) {
-                // TODO: Trata a reordenação das tarefas
+            if (task !== this.task) {
+                // A tarefa está sendo movida para a frente de this.task
+                order = this.task.get('order');
+                tasks = app.tasks.filter( function (model) {
+                    return model.get('id') !== task.get('id') &&
+                        model.get('status') === self.task.get('status') &&
+                        model.get('sprint') === self.task.get('sprint') &&
+                        model.get('order') >= order;
+                });
+                _.each(tasks, function (model, i) {
+                    model.save({order: order + (i + 1)});
+                });
+                task.moveTo(
+                    this.task.get('status'),
+                    this.task.get('sprint'),
+                    order);
             }
             this.trigger('drop', task);
             this.leave();
@@ -394,7 +421,8 @@
                     sprint: this.sprintId, status: 4, title: 'Completed'})
             };
             _.each(this.statuses, function (view, name) {
-                view.on('drop', function (task_id) {
+                view.on('drop', function (model) {
+                    var task_id = model
                     this.socket.send({
                         model: 'task',
                         id: task_id,
@@ -405,6 +433,7 @@
             this.socket = null;
             app.collections.ready.done(function () {
                 app.tasks.on('add', self.addTask, self);
+                app.tasks.on('change', self.changeTask, self);
                 app.sprints.getOrFetch(self.sprintId).done(function (sprint) {
                     self.sprint = sprint;
                     self.connectSocket();
@@ -441,6 +470,15 @@
         addTask: function (task) {
             if (task.inBacklog() || task.inSprint(this.sprint)) {
                 this.tasks[task.get('id')] = this.renderTask(task);
+            }
+        },
+        changeTask: function (task) {
+            var changed = task.changedAttributes(),
+                view = this.tasks[task.get('id')];
+            if (view && typeof(changed.status) !== 'undefined' ||
+                typeof(changed.sprint) !== 'undefined') {
+                    view.remove();
+                    this.addTask(task);
             }
         },
         renderTask: function (task) {
