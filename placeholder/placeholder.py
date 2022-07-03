@@ -9,7 +9,7 @@ from django.conf import settings
 
 DEBUG = os.environ.get('DEBUG','on') == 'on'
 
-SECRET_KEY = os.environ.get('SECRET_KEY','django-insecure-&lt#ctch$*ov4nvo-iu7%6)k2nn6u&86bpuyv^9!socgteock#')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 BASE_DIR = os.path.dirname(__file__)
 
